@@ -62,6 +62,12 @@ async def create_comment_for_item(
 )
 async def delete_comment_from_item(
     comment: Comment = Depends(get_comment_by_id_from_path),
+    user: User = Depends(get_current_user_authorizer()),
     comments_repo: CommentsRepository = Depends(get_repository(CommentsRepository)),
 ) -> None:
+    # Check if the user deleting the comment is the comment's owner
+    if comment.user_id != user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not allowed to delete this comment")
+
+    # If the user is the owner, proceed with deletion
     await comments_repo.delete_comment(comment=comment)
